@@ -34,7 +34,8 @@ const registerUser = ({ body }, res) => {
         message: "Something went wrong.",
       });
     } else {
-      res.status(201).json({ message: "Created User", user: newUser });
+      const token = newUser.getJwt();
+      res.status(201).json({ token });
     }
   });
 };
@@ -48,14 +49,20 @@ const loginUser = (req, res) => {
       return res.status(404).json(err);
     }
     if (user) {
-      return res.status(201).json({ message: "Logged In" });
+      const token = user.getJwt();
+      return res.status(201).json({ token });
     } else {
-      return res.status(401).json({ info });
+      return res.json(info);
     }
   })(req, res);
+};
+
+const generateFeed = (req, res) => {
+  res.status(200).json({ message: "Generating posts for a users feed." });
 };
 
 module.exports = {
   registerUser,
   loginUser,
+  generateFeed,
 };

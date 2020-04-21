@@ -1,3 +1,4 @@
+import { LocalStorageService } from './local-storage.service';
 import { Injectable } from '@angular/core';
 import {
   CanActivate,
@@ -9,7 +10,7 @@ import {
   providedIn: 'root',
 })
 export class AuthService {
-  constructor(private router: Router) {}
+  constructor(private router: Router, private storage: LocalStorageService) {}
 
   canActivate(
     route: ActivatedRouteSnapshot,
@@ -31,6 +32,14 @@ export class AuthService {
   }
 
   isLoggedIn() {
+    if (this.storage.getToken()) {
+      return true;
+    }
     return false;
+  }
+
+  public logout() {
+    this.storage.removeToken();
+    this.router.navigate(['/login']);
   }
 }

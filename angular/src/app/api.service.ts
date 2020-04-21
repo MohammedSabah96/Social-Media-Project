@@ -1,11 +1,11 @@
+import { LocalStorageService } from './local-storage.service';
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-
 @Injectable({
   providedIn: 'root',
 })
 export class ApiService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private storage: LocalStorageService) {}
 
   private baseUrl = 'http://localhost:3000';
   private successHandler(value: any) {
@@ -16,9 +16,10 @@ export class ApiService {
   }
 
   public makeRequest(requestObject: {
-    type: string;
-    body: {};
+    type: any;
     location: any;
+    authorize?: any;
+    body?: any;
   }): any {
     const type = requestObject.type.toLowerCase();
     if (!type) {
@@ -31,7 +32,15 @@ export class ApiService {
     }
     const url = `${this.baseUrl}/${location}`;
 
-    const httpOptions = {};
+    let httpOptions = {};
+
+    if (requestObject.authorize) {
+      httpOptions = {
+        headers: new HttpHeaders({
+          Authorization: `Bearer ${this.storage.getToken()}`,
+        }),
+      };
+    }
 
     if (type === 'get') {
       return this.http

@@ -6,7 +6,6 @@ const User = mongoose.model("User");
 const strategy = new localStrategy(
   { usernameField: "email" },
   (username, password, done) => {
-    console.log("AUTH!!!!!!!!!!");
     User.findOne({ email: username }, (err, user) => {
       if (err) {
         return done(err);

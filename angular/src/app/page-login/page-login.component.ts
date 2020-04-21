@@ -1,13 +1,18 @@
+import { LocalStorageService } from './../local-storage.service';
 import { Component, OnInit } from '@angular/core';
 import { ApiService } from './../api.service';
-
+import { Router } from '@angular/router';
 @Component({
   selector: 'app-page-login',
   templateUrl: './page-login.component.html',
   styleUrls: ['./page-login.component.css'],
 })
 export class PageLoginComponent implements OnInit {
-  constructor(private api: ApiService) {}
+  constructor(
+    private api: ApiService,
+    private storage: LocalStorageService,
+    private router: Router
+  ) {}
 
   public formError = '';
   public credentials = {
@@ -33,8 +38,13 @@ export class PageLoginComponent implements OnInit {
       body: this.credentials,
     };
     this.api.makeRequest(requestObject).then((val: any) => {
-      if (val.statusText === 'Unauthorized' && val.status === 401) {
-        this.formError = 'Your Email or Password does not exists.';
+      if (val.token) {
+        this.storage.setToken(val.token);
+        this.router.navigate(['/']);
+        return;
+      }
+      if (val.message) {
+        this.formError = val.message;
       }
     });
   }
