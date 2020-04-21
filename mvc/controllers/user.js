@@ -3,7 +3,13 @@ const mongoose = require("mongoose");
 const User = mongoose.model("User");
 
 const registerUser = ({ body }, res) => {
-  if (!Object.values(body).every((val) => val)) {
+  if (
+    !body.first_name ||
+    !body.last_name ||
+    !body.email ||
+    !body.password ||
+    !body.password_confirm
+  ) {
     return res.send({ message: "All Fields are required." });
   }
 
@@ -19,7 +25,14 @@ const registerUser = ({ body }, res) => {
   user.setPassword(body.password);
   user.save((err, newUser) => {
     if (err) {
-      res.status(400).json(err);
+      if (err.errmsg && err.errmsg.includes("duplicate key error")) {
+        return res.json({
+          message: "The provided email is already registered.",
+        });
+      }
+      return res.json({
+        message: "Something went wrong.",
+      });
     } else {
       res.status(201).json({ message: "Created User", user: newUser });
     }
@@ -37,7 +50,7 @@ const loginUser = (req, res) => {
     if (user) {
       return res.status(201).json({ message: "Logged In" });
     } else {
-      return res.status(401).json(info);
+      return res.status(401).json({ info });
     }
   })(req, res);
 };

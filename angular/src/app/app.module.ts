@@ -1,5 +1,7 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
+import { HttpClientModule } from '@angular/common/http';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './_app/app.component';
@@ -17,8 +19,28 @@ import { TopbarComponent } from './topbar/topbar.component';
 import { FormBgComponent } from './form-bg/form-bg.component';
 
 @NgModule({
-  declarations: [AppComponent, PageRegisterComponent, PageLoginComponent, PageFeedComponent, PageProfileComponent, PageMessagesComponent, PageSearchesComponent, PageFriendRequestsComponent, ResultRequestComponent, PostComponent, SidebarComponent, TopbarComponent, FormBgComponent],
-  imports: [BrowserModule, AppRoutingModule],
+  declarations: [
+    AppComponent,
+    PageRegisterComponent,
+    PageLoginComponent,
+    PageFeedComponent,
+    PageProfileComponent,
+    PageMessagesComponent,
+    PageSearchesComponent,
+    PageFriendRequestsComponent,
+    ResultRequestComponent,
+    PostComponent,
+    SidebarComponent,
+    TopbarComponent,
+    FormBgComponent,
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    HttpClientModule,
+    FormsModule,
+    ReactiveFormsModule,
+  ],
   providers: [],
   bootstrap: [AppComponent],
 })
