@@ -1,5 +1,4 @@
 import { ApiService } from './../api.service';
-import { AuthService } from './../auth.service';
 import { Component, OnInit } from '@angular/core';
 @Component({
   selector: 'app-page-feed',
@@ -7,7 +6,7 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./page-feed.component.css'],
 })
 export class PageFeedComponent implements OnInit {
-  constructor(public auth: AuthService, private api: ApiService) {}
+  constructor(private api: ApiService) {}
 
   ngOnInit(): void {
     const requestObject = {
