@@ -44,7 +44,7 @@ const messageSchema = new mongoose.Schema({
   from_id: {
     type: String,
     required: true,
-    unique: true,
+    // unique: true,
   },
   content: [
     {
@@ -97,6 +97,7 @@ userSchema.methods.getJwt = function () {
     {
       _id: this._id,
       email: this.email,
+      name: this.name,
     },
     process.env.JWT_SECRET
   );

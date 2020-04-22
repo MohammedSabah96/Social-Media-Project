@@ -24,6 +24,17 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
+app.use((req, res, next) => {
+  res.statusJson = (statusCode, data) => {
+    let obj = {
+      ...data,
+      statusCode: statusCode,
+    };
+    res.status(statusCode).json(obj);
+  };
+  next();
+});
+
 app.use(passport.initialize());
 
 app.use("/", (req, res, next) => {

@@ -12,6 +12,12 @@ router.get(
   CtrlUser.getSearchResults
 );
 
+router.post(
+  "/make-friend-request/:from/:to",
+  middleware.authorize,
+  CtrlUser.makeFriendRequest
+);
+
 router.delete("/all", CtrlUser.deleteAllUsers);
 
 module.exports = router;
