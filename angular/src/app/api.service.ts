@@ -83,4 +83,31 @@ export class ApiService {
       }
     });
   }
+
+  public resolveFriendRequest(resolution, id) {
+    const to = this.storage.getParsedToken()._id;
+
+    return new Promise((resolve, reject) => {
+      const requestObject = {
+        location: `users/resolve-friend-request/${id}/${to}?resolution=${resolution}`,
+        type: 'POST',
+        authorize: true,
+      };
+
+      this.makeRequest(requestObject).then((val) => {
+        if (val.statusCode === 201) {
+          const resolutioned =
+            resolution === 'accept' ? 'accepted' : 'declined';
+          this.alert.onAlertEvent.emit(
+            `Successfully ${resolutioned} friend request.`
+          );
+        } else {
+          this.alert.onAlertEvent.emit(
+            'Something went wrong and we could not handle your friend request.'
+          );
+        }
+        resolve(val);
+      });
+    });
+  }
 }

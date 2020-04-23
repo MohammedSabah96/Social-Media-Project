@@ -50,7 +50,8 @@
     <li class="nav-item dropdown no-arrow mx-1">
       <a routerLink="/friend-requests" href="" class="nav-link dropdown-toggle">
         <i class="fas fa-users"></i>
-        <span class="badge badge-danger badge-counter">11</span>
+        <span *ngIf="numOfFriendRequests" class="badge badge-danger badge-counter"> {{ numOfFriendRequests }}
+        </span>
       </a>
     </li>
 
@@ -60,7 +61,8 @@
         aria-haspopup="true" aria-expanded="false">
         <i class="fas fa-bell fa-fw"></i>
         <!-- Counter - Alerts -->
-        <span class="badge badge-danger badge-counter">3+</span>
+        <span *ngIf="userData.new_notifications"
+          class="badge badge-danger badge-counter">{{ userData.new_notifications }}</span>
       </a>
       <!-- Dropdown - Alerts -->
       <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
@@ -111,7 +113,8 @@
         aria-haspopup="true" aria-expanded="false">
         <i class="fas fa-envelope fa-fw"></i>
         <!-- Counter - Messages -->
-        <span class="badge badge-danger badge-counter">7</span>
+        <span *ngIf="userData.new_message_notifications"
+          class="badge badge-danger badge-counter">{{ userData.new_message_notifications }}</span>
       </a>
       <!-- Dropdown - Messages -->
       <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"

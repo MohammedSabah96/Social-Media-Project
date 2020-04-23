@@ -18,6 +18,23 @@ router.post(
   CtrlUser.makeFriendRequest
 );
 
+router.get(
+  "/get-friend-requests",
+  middleware.authorize,
+  CtrlUser.getFriendRequests
+);
+
+router.get(
+  "/get-user-data/:userid",
+  middleware.authorize,
+  CtrlUser.getUserData
+);
+router.post(
+  "/resolve-friend-request/:from/:to",
+  middleware.authorize,
+  CtrlUser.resolveFriendRequest
+);
+
 router.delete("/all", CtrlUser.deleteAllUsers);
 
 module.exports = router;
