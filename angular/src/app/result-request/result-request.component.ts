@@ -14,7 +14,23 @@ export class ResultRequestComponent implements OnInit {
 
   constructor(public api: ApiService, private storage: LocalStorageService) {}
 
-  ngOnInit(): void {}
+  public haveSentFriendRequest = false;
+  public haveRecievedFriendRequest = false;
+  public isFriend = false;
+  ngOnInit(): void {
+    if (this.resultRequest.haveSentFriendRequest) {
+      this.haveSentFriendRequest = true;
+    }
+    if (this.resultRequest.haveSentFriendRequest) {
+      this.haveSentFriendRequest = true;
+    }
+    if (this.resultRequest.haveRecievedFriendRequest) {
+      this.haveRecievedFriendRequest = true;
+    }
+    if (this.resultRequest.isFriend) {
+      this.isFriend = true;
+    }
+  }
 
   public accept() {
     this.updateRequests();

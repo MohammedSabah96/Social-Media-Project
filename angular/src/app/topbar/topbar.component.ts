@@ -30,8 +30,12 @@ export class TopbarComponent implements OnInit {
   ngOnInit(): void {
     this.username = this.storage.getParsedToken().name;
     this.userId = this.storage.getParsedToken()._id;
+
     this.alert.onAlertEvent.subscribe((msg: any) => {
       this.alertMessage = msg;
+    });
+    this.alert.updateNumOfFriendRequestsEvent.subscribe((_: any) => {
+      this.numOfFriendRequests--;
     });
 
     this.centralUserData.getUserData.subscribe((data: any) => {

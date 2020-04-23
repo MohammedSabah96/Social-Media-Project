@@ -74,7 +74,7 @@ const getSearchResults = ({ query, payload }, res) => {
   }
   User.find(
     { name: { $regex: query.query, $options: "i" } },
-    "name",
+    "name friends friend_requests",
     (err, results) => {
       if (err) {
         return res.json({ error: err });

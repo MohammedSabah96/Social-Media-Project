@@ -96,6 +96,7 @@ export class ApiService {
 
       this.makeRequest(requestObject).then((val) => {
         if (val.statusCode === 201) {
+          this.alert.updateNumOfFriendRequestsEvent.emit();
           const resolutioned =
             resolution === 'accept' ? 'accepted' : 'declined';
           this.alert.onAlertEvent.emit(
