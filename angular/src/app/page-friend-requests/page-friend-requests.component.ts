@@ -1,6 +1,8 @@
 import { ApiService } from './../api.service';
 import { UserDataService } from './../user-data.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
+import { Title } from '@angular/platform-browser';
+import { DOCUMENT } from '@angular/common';
 @Component({
   selector: 'app-page-friend-requests',
   templateUrl: './page-friend-requests.component.html',
@@ -9,12 +11,16 @@ import { Component, OnInit } from '@angular/core';
 export class PageFriendRequestsComponent implements OnInit {
   constructor(
     private centralUserData: UserDataService,
-    private api: ApiService
+    private api: ApiService,
+    private title: Title,
+    @Inject(DOCUMENT) private document: Document
   ) {}
 
   public userData: any = {};
   public friendRequests = [];
   ngOnInit(): void {
+    this.document.getElementById('sidebarToggleTop').classList.add('d-none');
+    this.title.setTitle('Friend Requests');
     this.centralUserData.getUserData.subscribe((data: any) => {
       this.userData = data;
 
@@ -28,7 +34,6 @@ export class PageFriendRequestsComponent implements OnInit {
       this.api.makeRequest(requestObject).then((val: any) => {
         if (val.statusCode === 200) {
           this.friendRequests = val.users;
-          console.log(this.friendRequests);
         }
       });
     });

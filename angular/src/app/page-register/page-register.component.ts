@@ -2,6 +2,7 @@ import { Router } from '@angular/router';
 import { LocalStorageService } from './../local-storage.service';
 import { Component, OnInit } from '@angular/core';
 import { ApiService } from './../api.service';
+import { Title } from '@angular/platform-browser';
 @Component({
   selector: 'app-page-register',
   templateUrl: './page-register.component.html',
@@ -11,7 +12,8 @@ export class PageRegisterComponent implements OnInit {
   constructor(
     private api: ApiService,
     private storage: LocalStorageService,
-    private router: Router
+    private router: Router,
+    private title: Title
   ) {}
 
   public formError = '';
@@ -22,7 +24,9 @@ export class PageRegisterComponent implements OnInit {
     password: '',
     password_confirm: '',
   };
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.title.setTitle('A Social Media - Register');
+  }
 
   public formSubmit() {
     this.formError = '';
