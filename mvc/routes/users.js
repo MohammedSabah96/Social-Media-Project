@@ -3,6 +3,8 @@ const router = express.Router();
 const middleware = require("./middleware/middleware");
 const CtrlUser = require("../controllers/user");
 
+const fakeUsersCtrl = require("../controllers/fake-users");
+
 router.post("/register", CtrlUser.registerUser);
 router.post("/login", CtrlUser.loginUser);
 router.get("/generate-feed", middleware.authorize, CtrlUser.generateFeed);
@@ -49,5 +51,5 @@ router.post(
 // Only for development Mode
 router.delete("/all", CtrlUser.deleteAllUsers);
 router.get("/all", CtrlUser.getAllUsers);
-
+router.post("/create-fake-users", fakeUsersCtrl.createFakeUsers);
 module.exports = router;
