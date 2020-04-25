@@ -40,6 +40,19 @@ const addCommentDetails = (posts) => {
   });
 };
 
+const getRandom = (min, max) => {
+  return Math.floor(Math.random() * (max - min)) + min;
+};
+
+const addToPosts = (array, user) => {
+  for (const item of array) {
+    item.name = user.name;
+    item.ago = timeAgo.ago(item.date);
+    item.ownerProfileImage = user.profile_image;
+    item.ownerid = user._id;
+  }
+};
+
 const registerUser = ({ body }, res) => {
   if (
     !body.first_name ||
@@ -100,24 +113,17 @@ const loginUser = (req, res) => {
 const generateFeed = ({ payload }, res) => {
   const posts = [];
   const maxAmountOfPosts = 48;
-  function addToPosts(array, name, ownerid) {
-    for (const item of array) {
-      item.name = name;
-      item.ago = timeAgo.ago(item.date);
-      item.ownerid = ownerid;
-    }
-  }
 
   let myPosts = new Promise((resolve, reject) => {
     User.findById(
       payload._id,
-      "name posts friends",
+      "name profile_image posts friends",
       { lean: true },
       (err, user) => {
         if (err) {
           return res.json({ err: err });
         }
-        addToPosts(user.posts, user.name, user._id);
+        addToPosts(user.posts, user);
         posts.push(...user.posts);
         resolve(user.friends);
       }
@@ -128,7 +134,7 @@ const generateFeed = ({ payload }, res) => {
     return new Promise((resolve, reject) => {
       User.find(
         { _id: { $in: friendsArray } },
-        "name posts",
+        "name profile_image posts",
         { lean: true },
         (err, users) => {
           if (err) {
@@ -136,7 +142,7 @@ const generateFeed = ({ payload }, res) => {
             return res.json({ err: err });
           }
           for (user of users) {
-            addToPosts(user.posts, user.name, user._id);
+            addToPosts(user.posts, user);
             posts.push(...user.posts);
           }
           resolve();
@@ -160,7 +166,7 @@ const getSearchResults = ({ query, payload }, res) => {
   }
   User.find(
     { name: { $regex: query.query, $options: "i" } },
-    "name friends friend_requests",
+    "name profile_image friends friend_requests",
     (err, results) => {
       if (err) {
         return res.json({ error: err });
@@ -202,13 +208,55 @@ const makeFriendRequest = ({ params }, res) => {
   });
 };
 
+// when we put "-salt -password" mean that get everything except these two
 const getUserData = ({ params }, res) => {
-  User.findById(params.userid, (err, user) => {
-    if (err) {
-      return res.json({ error: err });
+  User.findById(
+    params.userid,
+    "-salt -password",
+    { lean: true },
+    (err, user) => {
+      if (err) {
+        return res.json({ error: err });
+      }
+
+      function getRandomFriends(friendsList) {
+        let copyOfFriendsList = Array.from(friendsList);
+        let randomIds = [];
+        for (let i = 0; i < 6; i++) {
+          if (friendsList.length <= 6) {
+            randomIds = copyOfFriendsList;
+            break;
+          }
+          let randomId = getRandom(0, copyOfFriendsList.length);
+          randomIds.push(copyOfFriendsList[randomId]);
+          copyOfFriendsList.splice(randomId, 1);
+        }
+
+        return new Promise((resolve, reject) => {
+          User.find(
+            { _id: { $in: randomIds } },
+            " name profile_image",
+            (err, friends) => {
+              if (err) {
+                return res.json({ error: err });
+              }
+              resolve(friends);
+            }
+          );
+        });
+      }
+
+      user.posts.sort((a, b) => (a.date > b.date ? -1 : 1));
+      addToPosts(user.posts, user);
+      let randomFriends = getRandomFriends(user.friends);
+      let commentDetails = addCommentDetails(user.posts);
+
+      Promise.all([randomFriends, commentDetails]).then((val) => {
+        user.random_friends = val[0];
+        res.statusJson(200, { user: user });
+      });
     }
-    res.statusJson(200, { user: user });
-  });
+  );
 };
 
 const getFriendRequests = ({ query }, res) => {
@@ -301,6 +349,7 @@ const createPost = ({ body, payload }, res) => {
     let newPost = post.toObject();
     newPost.name = payload.name;
     newPost.ownerid = payload._id;
+    newPost.ownerProfileImage = user.profile_image;
 
     user.posts.push(post);
     user.save((err) => {
@@ -349,7 +398,7 @@ const postCommentOnPost = ({ body, params, payload }, res) => {
         return res.json({ err: err });
       }
 
-      User.findById(payload._id, "name profile_image", (err, user) => {
+      User.findById(payload._id, "name profile_image ", (err, user) => {
         if (err) {
           return res.json({ err: err });
         }

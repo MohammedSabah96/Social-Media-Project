@@ -28,24 +28,25 @@ export class PageFeedComponent implements OnInit {
     this.title.setTitle('A Social Media - Feed');
 
     const requestObject = {
-      type: 'GET',
       location: 'users/generate-feed',
-      authorize: true,
+      method: 'GET',
     };
     this.api.makeRequest(requestObject).then((val: any) => {
       if (val.statusCode === 200) {
-        this.posts.col1 = val.posts.filter(
+        const fullCol1 = val.posts.filter(
           (value: any, i: number) => i % 4 === 0
         );
-        this.posts.col2 = val.posts.filter(
+        const fullCol2 = val.posts.filter(
           (value: any, i: number) => i % 4 === 1
         );
-        this.posts.col3 = val.posts.filter(
+        const fullCol3 = val.posts.filter(
           (value: any, i: number) => i % 4 === 2
         );
-        this.posts.col4 = val.posts.filter(
+        const fullCol4 = val.posts.filter(
           (value: any, i: number) => i % 4 === 3
         );
+        const cols = [fullCol1, fullCol2, fullCol3, fullCol4];
+        this.addPostToFeed(cols, 0, 0);
       }
     });
   }
@@ -64,8 +65,7 @@ export class PageFeedComponent implements OnInit {
 
     const requestObject = {
       location: 'users/create-post',
-      type: 'POST',
-      authorize: true,
+      method: 'POST',
       body: {
         theme: this.newPostTheme,
         content: this.newPostContent,
@@ -83,5 +83,17 @@ export class PageFeedComponent implements OnInit {
       }
       this.newPostContent = '';
     });
+  }
+
+  private addPostToFeed(array: any[], colNumber: number, delay: number) {
+    setTimeout(() => {
+      if (array[colNumber].length) {
+        this.posts['col' + (colNumber + 1)].push(
+          array[colNumber].splice(0, 1)[0]
+        );
+        colNumber = ++colNumber % 4;
+        this.addPostToFeed(array, colNumber, 100);
+      }
+    }, delay);
   }
 }

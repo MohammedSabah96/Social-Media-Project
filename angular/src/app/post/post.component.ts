@@ -16,7 +16,7 @@ export class PostComponent implements OnInit {
   public align = 'left';
   public liked = false;
   public userId = '';
-  public comment = '';
+  public comment = [];
 
   ngOnInit(): void {
     function removeLeadingNumber(id: any) {
@@ -57,8 +57,7 @@ export class PostComponent implements OnInit {
   public likeButtonClicked(postid: any) {
     const requestObject = {
       location: `users/like-unlike/${this.post.ownerid}/${this.post._id}`,
-      type: 'POST',
-      authorize: true,
+      method: 'POST',
     };
 
     this.api.makeRequest(requestObject).then((_: any) => {
@@ -78,8 +77,7 @@ export class PostComponent implements OnInit {
     }
     const requestObject = {
       location: `users/post-comment/${this.post.ownerid}/${this.post._id}`,
-      type: 'POST',
-      authorize: true,
+      method: 'POST',
       body: { content: this.comment },
     };
     this.api.makeRequest(requestObject).then((val: any) => {
@@ -87,10 +85,10 @@ export class PostComponent implements OnInit {
         const newComment = {
           ...val.comment,
           commenter_name: val.commenter.name,
-          commenter_image: val.commenter.profile_image,
+          commenter_profile: val.commenter.profile_image,
         };
         this.post.comments.push(newComment);
-        this.comment = '';
+        this.comment = [];
       }
     });
   }

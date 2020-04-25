@@ -1,6 +1,6 @@
 import { ApiService } from './../api.service';
 import { UserDataService } from './../user-data.service';
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, OnDestroy } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { DOCUMENT } from '@angular/common';
 @Component({
@@ -8,7 +8,7 @@ import { DOCUMENT } from '@angular/common';
   templateUrl: './page-friend-requests.component.html',
   styleUrls: ['./page-friend-requests.component.css'],
 })
-export class PageFriendRequestsComponent implements OnInit {
+export class PageFriendRequestsComponent implements OnInit, OnDestroy {
   constructor(
     private centralUserData: UserDataService,
     private api: ApiService,
@@ -17,25 +17,27 @@ export class PageFriendRequestsComponent implements OnInit {
   ) {}
   public userData: any = {};
   public friendRequests = [];
+  public userDataEvent: any;
   ngOnInit(): void {
     this.document.getElementById('sidebarToggleTop').classList.add('d-none');
     this.title.setTitle('Friend Requests');
-    this.centralUserData.getUserData.subscribe((data: any) => {
-      this.userData = data;
+    this.userDataEvent = this.centralUserData.getUserData.subscribe(
+      (data: any) => {
+        this.userData = data;
 
-      const array = JSON.stringify(this.userData.friend_requests);
+        const array = JSON.stringify(this.userData.friend_requests);
 
-      const requestObject = {
-        location: `users/get-friend-requests?friend_requests=${array}`,
-        type: 'GET',
-        authorize: true,
-      };
-      this.api.makeRequest(requestObject).then((val: any) => {
-        if (val.statusCode === 200) {
-          this.friendRequests = val.users;
-        }
-      });
-    });
+        const requestObject = {
+          location: `users/get-friend-requests?friend_requests=${array}`,
+          method: 'GET',
+        };
+        this.api.makeRequest(requestObject).then((val: any) => {
+          if (val.statusCode === 200) {
+            this.friendRequests = val.users;
+          }
+        });
+      }
+    );
   }
 
   public updateFriendRequests(id: any) {
@@ -46,5 +48,8 @@ export class PageFriendRequestsComponent implements OnInit {
         break;
       }
     }
+  }
+  ngOnDestroy(): void {
+    this.userDataEvent.unsubscribe();
   }
 }

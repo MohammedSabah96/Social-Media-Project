@@ -48,4 +48,5 @@ export class ResultRequestComponent implements OnInit {
   private updateRequests() {
     this.resultRequestChange.emit(this.resultRequest._id);
   }
+  
 }
