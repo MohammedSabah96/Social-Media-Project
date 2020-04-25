@@ -1,6 +1,9 @@
 const passport = require("passport");
 const mongoose = require("mongoose");
 const User = mongoose.model("User");
+const Post = mongoose.model("Post");
+const Comment = mongoose.model("Comment");
+const timeAgo = require("time-ago");
 
 const containsDuplicate = (array) => {
   array.sort();
@@ -9,6 +12,32 @@ const containsDuplicate = (array) => {
       return true;
     }
   }
+};
+
+const addCommentDetails = (posts) => {
+  return new Promise((resolve, reject) => {
+    let promises = [];
+
+    for (const post of posts) {
+      for (const comment of post.comments) {
+        let promise = new Promise((resolve, reject) => {
+          User.findById(
+            comment.commenter_id,
+            "name profile_image",
+            (err, user) => {
+              comment.commenter_name = user.name;
+              comment.commenter_profile = user.profile_image;
+              resolve(comment);
+            }
+          );
+        });
+        promises.push(promise);
+      }
+    }
+    Promise.all(promises).then((val) => {
+      resolve(posts);
+    });
+  });
 };
 
 const registerUser = ({ body }, res) => {
@@ -32,7 +61,11 @@ const registerUser = ({ body }, res) => {
   user.setPassword(body.password);
   user.save((err, newUser) => {
     if (err) {
-      if (err.errmsg && err.errmsg.includes("duplicate key error")) {
+      if (
+        err.errmsg &&
+        err.errmsg.includes("duplicate key error") &&
+        err.errmsg.includes("email")
+      ) {
         return res.json({
           message: "The provided email is already registered.",
         });
@@ -64,8 +97,61 @@ const loginUser = (req, res) => {
   })(req, res);
 };
 
-const generateFeed = (req, res) => {
-  res.status(200).json({ message: "Generating posts for a users feed." });
+const generateFeed = ({ payload }, res) => {
+  const posts = [];
+  const maxAmountOfPosts = 48;
+  function addToPosts(array, name, ownerid) {
+    for (const item of array) {
+      item.name = name;
+      item.ago = timeAgo.ago(item.date);
+      item.ownerid = ownerid;
+    }
+  }
+
+  let myPosts = new Promise((resolve, reject) => {
+    User.findById(
+      payload._id,
+      "name posts friends",
+      { lean: true },
+      (err, user) => {
+        if (err) {
+          return res.json({ err: err });
+        }
+        addToPosts(user.posts, user.name, user._id);
+        posts.push(...user.posts);
+        resolve(user.friends);
+      }
+    );
+  });
+
+  let myFriendsPosts = myPosts.then((friendsArray) => {
+    return new Promise((resolve, reject) => {
+      User.find(
+        { _id: { $in: friendsArray } },
+        "name posts",
+        { lean: true },
+        (err, users) => {
+          if (err) {
+            reject();
+            return res.json({ err: err });
+          }
+          for (user of users) {
+            addToPosts(user.posts, user.name, user._id);
+            posts.push(...user.posts);
+          }
+          resolve();
+        }
+      );
+    });
+  });
+
+  myFriendsPosts.then(() => {
+    posts.sort((a, b) => (a.date > b.date ? -1 : 1));
+    postsShow = posts.slice(0, maxAmountOfPosts);
+    addCommentDetails(postsShow).then((posts) => {
+      res.statusJson(200, { posts: posts });
+    });
+  });
 };
 
 const getSearchResults = ({ query, payload }, res) => {
@@ -194,6 +280,89 @@ const resolveFriendRequest = ({ params, query }, res) => {
   });
 };
 
+const createPost = ({ body, payload }, res) => {
+  if (!body.content || !body.theme) {
+    return res.statusJson(400, {
+      message: "Insufficient data sent with the request.",
+    });
+  }
+  let userId = payload._id;
+
+  const post = new Post();
+
+  post.theme = body.theme;
+  post.content = body.content;
+
+  User.findById(userId, (err, user) => {
+    if (err) {
+      return res.json({ error: err });
+    }
+
+    let newPost = post.toObject();
+    newPost.name = payload.name;
+    newPost.ownerid = payload._id;
+
+    user.posts.push(post);
+    user.save((err) => {
+      if (err) {
+        return res.json({ error: err });
+      }
+      return res.statusJson(201, { message: "Create Post", newPost: newPost });
+    });
+  });
+};
+
+const likeUnlike = ({ params, payload }, res) => {
+  User.findById(params.ownerid, (err, user) => {
+    if (err) {
+      return res.json({ error: err });
+    }
+
+    const post = user.posts.id(params.postid);
+
+    if (post.likes.includes(payload._id)) {
+      post.likes.splice(post.likes.indexOf(payload._id), 1);
+    } else {
+      post.likes.push(payload._id);
+    }
+    user.save((err, user) => {
+      if (err) {
+        return res.json({ error: err });
+      }
+      res.statusJson(201, { message: "Like or Unlike a post....", user: user });
+    });
+  });
+};
+
+const postCommentOnPost = ({ body, params, payload }, res) => {
+  User.findById(params.ownerid, (err, user) => {
+    if (err) {
+      return res.json({ err: err });
+    }
+    const post = user.posts.id(params.postid);
+    let comment = new Comment();
+    comment.commenter_id = payload._id;
+    comment.comment_content = body.content;
+    post.comments.push(comment);
+    user.save((err, user) => {
+      if (err) {
+        return res.json({ err: err });
+      }
+
+      User.findById(payload._id, "name profile_image", (err, user) => {
+        if (err) {
+          return res.json({ err: err });
+        }
+        res.statusJson(201, {
+          message: "POST COMMENT",
+          comment: comment,
+          commenter: user,
+        });
+      });
+    });
+  });
+};
+
 // Only for development Mode
 const deleteAllUsers = (req, res) => {
   User.deleteMany({}, (err, info) => {
@@ -203,9 +372,19 @@ const deleteAllUsers = (req, res) => {
     return res.json({ message: "Deleted All Users", info: info });
   });
 };
+// Only for development Mode
+const getAllUsers = (req, res) => {
+  User.find((err, users) => {
+    if (err) {
+      return res.send({ error: err });
+    }
+    return res.json({ message: "Get All Users", users: users });
+  });
+};
 
 module.exports = {
   deleteAllUsers,
+  getAllUsers,
   registerUser,
   loginUser,
   generateFeed,
@@ -214,4 +393,7 @@ module.exports = {
   getUserData,
   getFriendRequests,
   resolveFriendRequest,
+  createPost,
+  likeUnlike,
+  postCommentOnPost,
 };

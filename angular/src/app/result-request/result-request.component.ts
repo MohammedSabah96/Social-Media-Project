@@ -36,17 +36,13 @@ export class ResultRequestComponent implements OnInit {
     this.updateRequests();
     this.api
       .resolveFriendRequest('accept', this.resultRequest._id)
-      .then((val) => {
-        console.log(val);
-      });
+      .then((val) => {});
   }
   public decline() {
     this.updateRequests();
     this.api
       .resolveFriendRequest('decline', this.resultRequest._id)
-      .then((val) => {
-        console.log(val);
-      });
+      .then((val) => {});
   }
 
   private updateRequests() {

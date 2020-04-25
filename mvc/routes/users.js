@@ -34,7 +34,20 @@ router.post(
   middleware.authorize,
   CtrlUser.resolveFriendRequest
 );
+router.post("/create-post", middleware.authorize, CtrlUser.createPost);
+router.post(
+  "/like-unlike/:ownerid/:postid",
+  middleware.authorize,
+  CtrlUser.likeUnlike
+);
+router.post(
+  "/post-comment/:ownerid/:postid",
+  middleware.authorize,
+  CtrlUser.postCommentOnPost
+);
 
+// Only for development Mode
 router.delete("/all", CtrlUser.deleteAllUsers);
+router.get("/all", CtrlUser.getAllUsers);
 
 module.exports = router;

@@ -15,7 +15,6 @@ export class PageFriendRequestsComponent implements OnInit {
     private title: Title,
     @Inject(DOCUMENT) private document: Document
   ) {}
-
   public userData: any = {};
   public friendRequests = [];
   ngOnInit(): void {
