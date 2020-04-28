@@ -1,5 +1,5 @@
+import { AlertsService } from './../alerts.service';
 import { ApiService } from './../api.service';
-import { UserDataService } from './../user-data.service';
 import { Component, OnInit, Inject, OnDestroy } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { DOCUMENT } from '@angular/common';
@@ -10,7 +10,7 @@ import { DOCUMENT } from '@angular/common';
 })
 export class PageFriendRequestsComponent implements OnInit, OnDestroy {
   constructor(
-    private centralUserData: UserDataService,
+    private alert: AlertsService,
     private api: ApiService,
     private title: Title,
     @Inject(DOCUMENT) private document: Document
@@ -18,26 +18,25 @@ export class PageFriendRequestsComponent implements OnInit, OnDestroy {
   public userData: any = {};
   public friendRequests = [];
   public userDataEvent: any;
+
   ngOnInit(): void {
     this.document.getElementById('sidebarToggleTop').classList.add('d-none');
     this.title.setTitle('Friend Requests');
-    this.userDataEvent = this.centralUserData.getUserData.subscribe(
-      (data: any) => {
-        this.userData = data;
+    this.userDataEvent = this.alert.getUserData.subscribe((data: any) => {
+      this.userData = data;
 
-        const array = JSON.stringify(this.userData.friend_requests);
+      const array = JSON.stringify(this.userData.friend_requests);
 
-        const requestObject = {
-          location: `users/get-friend-requests?friend_requests=${array}`,
-          method: 'GET',
-        };
-        this.api.makeRequest(requestObject).then((val: any) => {
-          if (val.statusCode === 200) {
-            this.friendRequests = val.users;
-          }
-        });
-      }
-    );
+      const requestObject = {
+        location: `users/get-friend-requests?friend_requests=${array}`,
+        method: 'GET',
+      };
+      this.api.makeRequest(requestObject).then((val: any) => {
+        if (val.statusCode === 200) {
+          this.friendRequests = val.users;
+        }
+      });
+    });
   }
 
   public updateFriendRequests(id: any) {

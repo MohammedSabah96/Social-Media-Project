@@ -1,7 +1,6 @@
 import { AlertsService } from './../alerts.service';
 import { ActivatedRoute } from '@angular/router';
 import { ApiService } from './../api.service';
-import { UserDataService } from './../user-data.service';
 import { Component, OnInit, Inject, OnDestroy } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { DOCUMENT } from '@angular/common';
@@ -15,7 +14,6 @@ export class PageProfileComponent implements OnInit, OnDestroy {
     private title: Title,
     @Inject(DOCUMENT) private document: Document,
     private api: ApiService,
-    private centralUserData: UserDataService,
     private route: ActivatedRoute,
     private alert: AlertsService
   ) {}
@@ -29,59 +27,74 @@ export class PageProfileComponent implements OnInit, OnDestroy {
   public usersEmail = '';
   public usersId = '';
 
+  public isBestie = false;
+  public isEnemy = false;
+  public maxAmountOfBesties = false;
+
   public canAddUser = false;
   public canSendMessage = false;
   public haveSentFriendRequest = false;
   public haveReceivedFriendRequest = false;
   public userDataEvent: any;
+
+  private besties = [];
+  private enemies = [];
+
   ngOnInit(): void {
     this.title.setTitle('Profile');
     this.document.getElementById('sidebarToggleTop').classList.add('d-none');
 
-    this.userDataEvent = this.centralUserData.getUserData.subscribe(
-      (user: any) => {
-        this.route.params.subscribe((params) => {
-          this.showPosts = 6;
-          if (user._id === params.userid) {
-            this.setComponentValues(user);
-            this.resetBooleans();
-          } else {
-            this.canSendMessage = true;
-            const requestObject = {
-              location: `users/get-user-data/${params.userid}`,
-              method: 'GET',
-            };
-            this.api
-              .makeRequest(requestObject)
-              .then((data: { statusCode: number; user: any }) => {
-                if (data.statusCode === 200) {
-                  this.canAddUser = user.friends.includes(data.user._id)
-                    ? false
-                    : true;
+    this.userDataEvent = this.alert.getUserData.subscribe((user: any) => {
+      this.besties = user.besties;
+      this.enemies = user.enemies;
 
-                  this.haveReceivedFriendRequest = user.friend_requests.includes(
-                    data.user._id
-                  )
-                    ? true
-                    : false;
+      this.route.params.subscribe((params) => {
+        this.showPosts = 6;
 
-                  this.haveSentFriendRequest = data.user.friend_requests.includes(
-                    user._id
-                  )
-                    ? true
-                    : false;
+        this.isBestie = user.besties.some((v: any) => v._id === params.userid);
+        this.isEnemy = user.enemies.some((v: any) => v._id === params.userid);
 
-                  if (this.canAddUser) {
-                    this.showPosts = 0;
-                  }
+        this.maxAmountOfBesties = user.besties.length >= 2;
 
-                  this.setComponentValues(data.user);
+        if (user._id === params.userid) {
+          this.setComponentValues(user);
+          this.resetBooleans();
+        } else {
+          this.canSendMessage = true;
+          const requestObject = {
+            location: `users/get-user-data/${params.userid}`,
+            method: 'GET',
+          };
+          this.api
+            .makeRequest(requestObject)
+            .then((data: { statusCode: number; user: any }) => {
+              if (data.statusCode === 200) {
+                this.canAddUser = user.friends.includes(data.user._id)
+                  ? false
+                  : true;
+
+                this.haveReceivedFriendRequest = user.friend_requests.includes(
+                  data.user._id
+                )
+                  ? true
+                  : false;
+
+                this.haveSentFriendRequest = data.user.friend_requests.includes(
+                  user._id
+                )
+                  ? true
+                  : false;
+
+                if (this.canAddUser) {
+                  this.showPosts = 0;
                 }
-              });
-          }
-        });
-      }
-    );
+
+                this.setComponentValues(data.user);
+              }
+            });
+        }
+      });
+    });
   }
 
   public showMorePosts() {
@@ -133,10 +146,41 @@ export class PageProfileComponent implements OnInit, OnDestroy {
     this.canSendMessage = false;
     this.haveReceivedFriendRequest = false;
     this.haveSentFriendRequest = false;
+    this.isBestie = false;
+    this.isEnemy = false;
+    this.maxAmountOfBesties = false;
   }
 
   public updateSendMessageObject(id: any, name: any) {
     this.alert.updateSendMessageObjectEvent.emit({ id, name });
+  }
+
+  public toggleRequest(toggle: any) {
+    function toggleValue(array: any[]) {
+      for (let i = 0; i < array.length; i++) {
+        if (array[i]._id === this.usersId) {
+          return array.splice(i, 1);
+        }
+      }
+      array.push({ _id: this.usersId });
+    }
+
+    const requestObject = {
+      location: `users/bestie-enemy-toggle/${this.usersId}?toggle=${toggle}`,
+      method: 'POST',
+    };
+    this.api.makeRequest(requestObject).then((val: any) => {
+      if (val.statusCode === 201) {
+        if (toggle === 'besties') {
+          toggleValue.call(this, this.besties);
+          this.maxAmountOfBesties = this.besties.length >= 2;
+          this.isBestie = !this.isBestie;
+        } else {
+          toggleValue.call(this, this.enemies);
+          this.isEnemy = !this.isEnemy;
+        }
+      }
+    });
   }
 
   ngOnDestroy(): void {

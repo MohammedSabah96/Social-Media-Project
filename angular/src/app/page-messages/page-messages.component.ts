@@ -1,4 +1,4 @@
-import { UserDataService } from './../user-data.service';
+import { AlertsService } from './../alerts.service';
 import { ApiService } from './../api.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Title } from '@angular/platform-browser';
@@ -11,7 +11,7 @@ export class PageMessagesComponent implements OnInit, OnDestroy {
   constructor(
     private title: Title,
     private api: ApiService,
-    private centralUserData: UserDataService
+    private alert: AlertsService
   ) {}
 
   public activeMessage = {
@@ -37,7 +37,7 @@ export class PageMessagesComponent implements OnInit, OnDestroy {
       this.activeMessage.fromId = history.state.data.msgId;
     }
 
-    this.userDataEvent = this.centralUserData.getUserData.subscribe(
+    this.userDataEvent = this.alert.getUserData.subscribe(
       (user: any) => {
         if (user.messages.length) {
           this.activeMessage.fromId =

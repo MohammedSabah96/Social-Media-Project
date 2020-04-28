@@ -1,26 +1,27 @@
+import { AlertsService } from './../alerts.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { AuthService } from './../auth.service';
-import { UserDataService } from './../user-data.service';
 @Component({
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.css'],
 })
 export class SidebarComponent implements OnInit, OnDestroy {
-  constructor(
-    public auth: AuthService,
-    private centralUserData: UserDataService
-  ) {}
+  constructor(public auth: AuthService, private alert: AlertsService) {}
 
   public userData: any = {};
+
+  public besties = [];
+  public enemies = [];
+
   public userDataEvent: any;
 
   ngOnInit(): void {
-    this.userDataEvent = this.centralUserData.getUserData.subscribe(
-      (data: any) => {
-        this.userData = data;
-      }
-    );
+    this.userDataEvent = this.alert.getUserData.subscribe((user: any) => {
+      this.userData = user;
+      this.besties = user.besties;
+      this.enemies = user.enemies;
+    });
   }
 
   ngOnDestroy(): void {

@@ -1,5 +1,4 @@
 import { ApiService } from './../api.service';
-import { UserDataService } from './../user-data.service';
 import { AlertsService } from './../alerts.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
@@ -16,7 +15,6 @@ export class TopbarComponent implements OnInit, OnDestroy {
     private router: Router,
     private storage: LocalStorageService,
     private alert: AlertsService,
-    private centralUserData: UserDataService,
     private api: ApiService
   ) {}
   public query = '';
@@ -55,14 +53,12 @@ export class TopbarComponent implements OnInit, OnDestroy {
       }
     );
 
-    this.userDataEvent = this.centralUserData.getUserData.subscribe(
-      (user: any) => {
-        this.notifications.friendRequests = user.friend_requests.length;
-        this.notifications.messages = user.new_message_notifications.length;
-        this.profilePicture = user.profile_image;
-        this.setMessagePreviews(user.messages, user.new_message_notifications);
-      }
-    );
+    this.userDataEvent = this.alert.getUserData.subscribe((user: any) => {
+      this.notifications.friendRequests = user.friend_requests.length;
+      this.notifications.messages = user.new_message_notifications.length;
+      this.profilePicture = user.profile_image;
+      this.setMessagePreviews(user.messages, user.new_message_notifications);
+    });
 
     this.updateMessageEvent = this.alert.updateSendMessageObjectEvent.subscribe(
       (val: any) => {
@@ -82,7 +78,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
       method: 'GET',
     };
     this.api.makeRequest(requestObject).then((val: any) => {
-      this.centralUserData.getUserData.emit(val.user);
+      this.alert.getUserData.emit(val.user);
     });
   }
 

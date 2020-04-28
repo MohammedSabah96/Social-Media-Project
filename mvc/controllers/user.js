@@ -286,13 +286,46 @@ const getUserData = ({ params }, res) => {
       let commentDetails = addCommentDetails(user.posts);
       let messageDetails = addMessengerDetails(user.messages);
 
-      Promise.all([randomFriends, commentDetails, messageDetails]).then(
-        (val) => {
-          user.random_friends = val[0];
-          user.messages = val[2];
-          res.statusJson(200, { user: user });
-        }
-      );
+      let besties = new Promise((resolve, reject) => {
+        User.find(
+          { _id: { $in: user.besties } },
+          "name profile_image",
+          (err, users) => {
+            if (err) {
+              return res.json({ error: err });
+            }
+            user.besties = users;
+            resolve();
+          }
+        );
+      });
+      let enemies = new Promise((resolve, reject) => {
+        User.find(
+          { _id: { $in: user.enemies } },
+          "name profile_image",
+          (err, users) => {
+            if (err) {
+              return res.json({ error: err });
+            }
+            user.enemies = users;
+            resolve();
+          }
+        );
+      });
+
+      const waitFor = [
+        randomFriends,
+        commentDetails,
+        messageDetails,
+        besties,
+        enemies,
+      ];
+
+      Promise.all(waitFor).then((val) => {
+        user.random_friends = val[0];
+        user.messages = val[2];
+        res.statusJson(200, { user: user });
+      });
     }
   );
 };
@@ -568,6 +601,42 @@ const deleteMessage = ({ params, payload }, res) => {
   });
 };
 
+const bestieEnemyToggle = ({ params, payload, query }, res) => {
+  let toggle = query.toggle;
+  if (toggle != "besties" && toggle != "enemies") {
+    return res.json({ message: "Incorrect query supplied." });
+  }
+
+  let myId = payload._id;
+  let friendId = params.userid;
+
+  User.findById(myId, (err, user) => {
+    if (err) {
+      return res.json({ err: err });
+    }
+    if (!user.friends.includes(friendId)) {
+      return res.json({ message: "You are not friends with this user." });
+    }
+
+    let arr = user[toggle];
+
+    if (arr.includes(friendId)) {
+      arr.splice(arr.indexOf(friendId), 1);
+    } else {
+      if (toggle == "besties" && user.besties.length >= 2) {
+        return res.json({ message: "You have the max amount of besties." });
+      }
+      arr.push(friendId);
+    }
+    user.save((err) => {
+      if (err) {
+        return res.json({ err: err });
+      }
+      return res.statusJson(201, { message: "Bestie/Enemy" });
+    });
+  });
+};
+
 // Only for development Mode
 const deleteAllUsers = (req, res) => {
   User.deleteMany({}, (err, info) => {
@@ -604,4 +673,5 @@ module.exports = {
   sendMessage,
   resetMessageNotifications,
   deleteMessage,
+  bestieEnemyToggle,
 };
