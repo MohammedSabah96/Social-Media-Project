@@ -112,4 +112,46 @@ export class ApiService {
       });
     });
   }
+
+  public sendMessage(sendMessageObject: any, showAlerts = true) {
+    if (!sendMessageObject.content && showAlerts) {
+      this.alert.onAlertEvent.emit(
+        'Message not Sent. You must provide some content for your message'
+      );
+      return;
+    }
+
+    const requestObject = {
+      location: `users/send-message/${sendMessageObject.id}`,
+      method: 'POST',
+      body: {
+        content: sendMessageObject.content,
+      },
+    };
+
+    return new Promise((resolve, reject) => {
+      this.makeRequest(requestObject).then((val: any) => {
+        if (val.statusCode === 201 && showAlerts) {
+          this.alert.onAlertEvent.emit('Successfully sent a message');
+        }
+        resolve(val);
+      });
+    });
+  }
+
+  public resetMessageNotifications() {
+    const requestObject = {
+      location: 'users/reset-message-notifications',
+      method: 'POST',
+    };
+
+    return new Promise((resolve, reject) => {
+      this.makeRequest(requestObject).then((val: any) => {
+        if (val.statusCode === 201) {
+          this.alert.resetMessageNotificationsEvent.emit();
+        }
+        resolve();
+      });
+    });
+  }
 }

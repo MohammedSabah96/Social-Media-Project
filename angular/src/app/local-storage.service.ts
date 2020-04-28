@@ -31,14 +31,15 @@ export class LocalStorageService {
     this.set(this.tokenName, token);
   }
 
+  public getToken() {
+    return this.get(this.tokenName);
+  }
+
   public getParsedToken() {
     const token = this.getToken();
     return JSON.parse(atob(token.split('.')[1]));
   }
 
-  public getToken() {
-    return this.get(this.tokenName);
-  }
   public removeToken() {
     localStorage.removeItem(this.tokenName);
   }

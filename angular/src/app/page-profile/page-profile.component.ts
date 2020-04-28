@@ -134,6 +134,11 @@ export class PageProfileComponent implements OnInit, OnDestroy {
     this.haveReceivedFriendRequest = false;
     this.haveSentFriendRequest = false;
   }
+
+  public updateSendMessageObject(id: any, name: any) {
+    this.alert.updateSendMessageObjectEvent.emit({ id, name });
+  }
+
   ngOnDestroy(): void {
     this.userDataEvent.unsubscribe();
   }

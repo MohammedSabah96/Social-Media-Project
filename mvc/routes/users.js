@@ -47,7 +47,13 @@ router.post(
   middleware.authorize,
   CtrlUser.postCommentOnPost
 );
-
+router.post("/send-message/:to", middleware.authorize, CtrlUser.sendMessage);
+router.post(
+  "/reset-message-notifications",
+  middleware.authorize,
+  CtrlUser.resetMessageNotifications
+);
+router.post("/delete-message/:messageid", middleware.authorize, CtrlUser.deleteMessage);
 // Only for development Mode
 router.delete("/all", CtrlUser.deleteAllUsers);
 router.get("/all", CtrlUser.getAllUsers);

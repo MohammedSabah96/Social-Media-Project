@@ -1,3 +1,4 @@
+import { AlertsService } from './../alerts.service';
 import { LocalStorageService } from './../local-storage.service';
 import { ApiService } from './../api.service';
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
@@ -12,7 +13,11 @@ export class ResultRequestComponent implements OnInit {
   @Output() resultRequestChange = new EventEmitter<any>();
   @Input() use: any;
 
-  constructor(public api: ApiService, private storage: LocalStorageService) {}
+  constructor(
+    public api: ApiService,
+    private storage: LocalStorageService,
+    private alert: AlertsService
+  ) {}
 
   public haveSentFriendRequest = false;
   public haveRecievedFriendRequest = false;
@@ -48,5 +53,8 @@ export class ResultRequestComponent implements OnInit {
   private updateRequests() {
     this.resultRequestChange.emit(this.resultRequest._id);
   }
-  
+
+  public updateSendMessageObject(id: any, name: any) {
+    this.alert.updateSendMessageObjectEvent.emit({ id, name });
+  }
 }

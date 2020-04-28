@@ -2,6 +2,11 @@
 
  .message {
    background-color: #F5F5F5 !important;
+   cursor: pointer;
+ }
+
+ .message:hover {
+   background-color: #EEEEEE !important;
  }
 
  .message-container {
