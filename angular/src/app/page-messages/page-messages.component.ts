@@ -37,19 +37,18 @@ export class PageMessagesComponent implements OnInit, OnDestroy {
       this.activeMessage.fromId = history.state.data.msgId;
     }
 
-    this.userDataEvent = this.alert.getUserData.subscribe(
-      (user: any) => {
-        if (user.messages.length) {
-          this.activeMessage.fromId =
-            this.activeMessage.fromId || user.messages[0].from_id;
-          this.messages = user.messages.reverse();
-          this.usersName = user.name;
-          this.usersId = user._id;
-          this.usersProfileImage = user.profile_image;
-          this.setActiveMessage(this.activeMessage.fromId);
-        }
+    this.userDataEvent = this.alert.getUserData.subscribe((user: any) => {
+      if (!user.messages.length) {
+        return;
       }
-    );
+      this.activeMessage.fromId =
+        this.activeMessage.fromId || user.messages[0].from_id;
+      this.messages = user.messages.reverse();
+      this.usersName = user.name;
+      this.usersId = user._id;
+      this.usersProfileImage = user.profile_image;
+      this.setActiveMessage(this.activeMessage.fromId);
+    });
   }
 
   public setActiveMessage(id: any) {

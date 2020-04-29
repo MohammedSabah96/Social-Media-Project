@@ -34,8 +34,9 @@ export class TopbarComponent implements OnInit, OnDestroy {
   public userId = '';
   public profilePicture = 'default-avatar';
   public messagePreviews = [];
+  public alerts = [];
   public notifications = {
-    alert: 0,
+    alerts: 0,
     friendRequests: 0,
     messages: 0,
   };
@@ -56,7 +57,10 @@ export class TopbarComponent implements OnInit, OnDestroy {
     this.userDataEvent = this.alert.getUserData.subscribe((user: any) => {
       this.notifications.friendRequests = user.friend_requests.length;
       this.notifications.messages = user.new_message_notifications.length;
+      this.notifications.alerts = user.new_notifications;
       this.profilePicture = user.profile_image;
+
+      this.setAlerts(user.notifications);
       this.setMessagePreviews(user.messages, user.new_message_notifications);
     });
 
@@ -92,7 +96,25 @@ export class TopbarComponent implements OnInit, OnDestroy {
   }
 
   public resetMessageNotifications() {
+    if (this.notifications.messages === 0) {
+      return;
+    }
     this.api.resetMessageNotifications();
+  }
+
+  public resetAlertNotifications() {
+    if (this.notifications.alerts === 0) {
+      return;
+    }
+    const requestObject = {
+      location: 'users/reset-alert-notifications',
+      method: 'POST',
+    };
+    this.api.makeRequest(requestObject).then((val: any) => {
+      if (val.statusCode === 201) {
+        this.notifications.alerts = 0;
+      }
+    });
   }
 
   private setMessagePreviews(messages: any, messageNotifications: any) {
@@ -128,6 +150,37 @@ export class TopbarComponent implements OnInit, OnDestroy {
     this.router.navigate(['/messages'], {
       state: { data: { msgId: messageId } },
     });
+  }
+
+  private setAlerts(notificationsData: any) {
+    for (const alert of notificationsData) {
+      const alertObj = JSON.parse(alert);
+      const newAlert = {
+        text: alertObj.alert_text,
+        icon: '',
+        bgColor: '',
+        href: '',
+      };
+
+      switch (alertObj.alert_type) {
+        case 'new_friend':
+          newAlert.icon = 'fa-user-check';
+          newAlert.bgColor = 'bg-success';
+          newAlert.href = `/profile/${alertObj.from_id}`;
+          break;
+        case 'liked_post':
+          newAlert.icon = 'fa-thumbs-up';
+          newAlert.bgColor = 'bg-purple';
+          newAlert.href = `/profile/${this.userId}`;
+          break;
+        case 'commented_post':
+          newAlert.icon = 'fa-comment';
+          newAlert.bgColor = 'bg-primary';
+          newAlert.href = `/profile/${this.userId}`;
+          break;
+      }
+      this.alerts.push(newAlert);
+    }
   }
 
   ngOnDestroy(): void {

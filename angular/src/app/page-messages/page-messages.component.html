@@ -43,7 +43,7 @@
           <div class="col-xl-7 col-lg-7">
             <div *ngIf="messages.length"
               class="message-window shadow bg-white d-flex flex-column justify-content-between">
-              <div class="message-content p-3 grow-1 custom-scroll">
+              <div [scrollTop]="ScrollMe.scrollHeight" #ScrollMe class="message-content p-3 grow-1 custom-scroll">
 
                 <div *ngFor="let group of activeMessage.messageGroups" class="messenger mb-5">
                   <div class="mb-2" [ngClass]="{'ml-auto w-max': group.isMe}">

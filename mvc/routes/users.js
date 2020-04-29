@@ -72,6 +72,11 @@ router.post(
   middleware.authorize,
   CtrlUser.bestieEnemyToggle
 );
+router.post(
+  "/reset-alert-notifications",
+  middleware.authorize,
+  CtrlUser.resetAlertNotifications
+);
 
 // Only for development Mode
 router.delete("/all", CtrlUser.deleteAllUsers);

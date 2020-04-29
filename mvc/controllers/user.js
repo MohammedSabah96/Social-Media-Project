@@ -6,6 +6,8 @@ const Message = mongoose.model("Message");
 const Comment = mongoose.model("Comment");
 const timeAgo = require("time-ago");
 
+// Helper Functions
+
 const containsDuplicate = (array) => {
   array.sort();
   for (let i = 0; i < array.length; i++) {
@@ -53,6 +55,52 @@ const addToPosts = (array, user) => {
     item.ownerid = user._id;
   }
 };
+
+const alertUser = (fromUser, toId, type, postContent) => {
+  return new Promise((resolve, reject) => {
+    let alert = {
+      alert_type: type,
+      from_id: fromUser._id,
+      from_name: fromUser.name,
+    };
+
+    if (postContent && postContent.length > 28) {
+      postContent = postContent.substring(0, 28) + "...";
+    }
+
+    switch (type) {
+      case "new_friend":
+        alert.alert_text = `${alert.from_name} has accepted your friend request`;
+        break;
+      case "liked_post":
+        alert.alert_text = `${alert.from_name} has liked your post, '${postContent}'.`;
+        break;
+      case "commented_post":
+        alert.alert_text = `${alert.from_name} has commented on your post, '${postContent}'.`;
+        break;
+      default:
+        return reject("No Valid type for alert.");
+    }
+    User.findById(toId, (err, user) => {
+      if (err) {
+        reject(err);
+        return res.json({ err: err });
+      }
+      user.new_notifications++;
+      user.notifications.splice(18);
+      user.notifications.unshift(JSON.stringify(alert));
+      user.save((err) => {
+        if (err) {
+          reject(err);
+          return res.json({ err: err });
+        }
+        resolve();
+      });
+    });
+  });
+};
+
+// Controllers
 
 const registerUser = ({ body }, res) => {
   if (
@@ -402,8 +450,9 @@ const resolveFriendRequest = ({ params, query }, res) => {
         if (err) {
           return res.json({ error: err });
         }
-
-        res.statusJson(201, { message: "Resolved friend request" });
+        alertUser(user, params.from, "new_friend").then(() => {
+          res.statusJson(201, { message: "Resolved friend request" });
+        });
       });
     });
   });
@@ -450,16 +499,41 @@ const likeUnlike = ({ params, payload }, res) => {
 
     const post = user.posts.id(params.postid);
 
-    if (post.likes.includes(payload._id)) {
-      post.likes.splice(post.likes.indexOf(payload._id), 1);
-    } else {
-      post.likes.push(payload._id);
-    }
-    user.save((err, user) => {
-      if (err) {
-        return res.json({ error: err });
+    let promise = new Promise((resolve, reject) => {
+      if (post.likes.includes(payload._id)) {
+        post.likes.splice(post.likes.indexOf(payload._id), 1);
+        resolve();
+      } else {
+        post.likes.push(payload._id);
+
+        if (params.ownerid != params._id) {
+          User.findById(payload._id, (err, user) => {
+            if (err) {
+              reject(err);
+              return res.json({ error: err });
+            }
+            alertUser(user, params.ownerid, "liked_post", post.content).then(
+              () => {
+                resolve();
+              }
+            );
+          });
+        } else {
+          resolve();
+        }
       }
-      res.statusJson(201, { message: "Like or Unlike a post....", user: user });
+    });
+
+    promise.then(() => {
+      user.save((err, user) => {
+        if (err) {
+          return res.json({ error: err });
+        }
+        res.statusJson(201, {
+          message: "Like or Unlike a post....",
+          user: user,
+        });
+      });
     });
   });
 };
@@ -483,10 +557,28 @@ const postCommentOnPost = ({ body, params, payload }, res) => {
         if (err) {
           return res.json({ err: err });
         }
-        res.statusJson(201, {
-          message: "POST COMMENT",
-          comment: comment,
-          commenter: user,
+
+        let promise = new Promise((resolve, reject) => {
+          if (payload._id != params.ownerid) {
+            alertUser(
+              user,
+              params.ownerid,
+              "commented_post",
+              post.content
+            ).then(() => {
+              resolve();
+            });
+          } else {
+            resolve();
+          }
+        });
+
+        promise.then(() => {
+          res.statusJson(201, {
+            message: "POST COMMENT",
+            comment: comment,
+            commenter: user,
+          });
         });
       });
     });
@@ -647,6 +739,21 @@ const bestieEnemyToggle = ({ params, payload, query }, res) => {
   });
 };
 
+const resetAlertNotifications = ({ payload }, res) => {
+  User.findById(payload._id, (err, user) => {
+    if (err) {
+      return res.json({ err: err });
+    }
+    user.new_notifications = 0;
+    user.save((err) => {
+      if (err) {
+        return res.json({ err: err });
+      }
+      return res.statusJson(201, { message: "Reset Alert Notifications" });
+    });
+  });
+};
+
 // Only for development Mode
 const deleteAllUsers = (req, res) => {
   User.deleteMany({}, (err, info) => {
@@ -684,4 +791,5 @@ module.exports = {
   resetMessageNotifications,
   deleteMessage,
   bestieEnemyToggle,
+  resetAlertNotifications,
 };
