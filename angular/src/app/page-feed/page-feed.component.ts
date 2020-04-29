@@ -24,6 +24,8 @@ export class PageFeedComponent implements OnInit {
     col3: [],
     col4: [],
   };
+  public bestiePosts = [];
+
   ngOnInit(): void {
     this.title.setTitle('A Social Media - Feed');
 
@@ -33,6 +35,8 @@ export class PageFeedComponent implements OnInit {
     };
     this.api.makeRequest(requestObject).then((val: any) => {
       if (val.statusCode === 200) {
+        this.bestiePosts = val.bestiePosts;
+
         const fullCol1 = val.posts.filter(
           (value: any, i: number) => i % 4 === 0
         );

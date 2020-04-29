@@ -43,6 +43,9 @@ export class PageSearchesComponent implements OnInit, OnDestroy {
     };
 
     this.api.makeRequest(requestObject).then((val: any) => {
+      if (val.err) {
+        return;
+      }
       this.results = val.results;
 
       for (const result of this.results) {

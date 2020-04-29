@@ -113,51 +113,61 @@ const loginUser = (req, res) => {
 
 const generateFeed = ({ payload }, res) => {
   const posts = [];
-  const maxAmountOfPosts = 48;
+  const bestiePosts = [];
 
   let myPosts = new Promise((resolve, reject) => {
-    User.findById(
-      payload._id,
-      "name profile_image posts friends",
-      { lean: true },
-      (err, user) => {
-        if (err) {
-          return res.json({ err: err });
-        }
-        addToPosts(user.posts, user);
-        posts.push(...user.posts);
-        resolve(user.friends);
+    User.findById(payload._id, "", { lean: true }, (err, user) => {
+      if (err) {
+        return res.json({ err: err });
       }
-    );
+      addToPosts(user.posts, user);
+      posts.push(...user.posts);
+
+      user.friends = user.friends.filter((val) => {
+        return !user.besties.includes(val);
+      });
+
+      resolve(user);
+    });
   });
 
-  let myFriendsPosts = myPosts.then((friendsArray) => {
+  function getPostsFrom(arrayOfUsers, maxAmountOfPosts, postsArray) {
     return new Promise((resolve, reject) => {
       User.find(
-        { _id: { $in: friendsArray } },
-        "name profile_image posts",
+        { _id: { $in: arrayOfUsers } },
+        "name posts profile_image",
         { lean: true },
         (err, users) => {
           if (err) {
-            reject();
+            reject(err);
             return res.json({ err: err });
           }
+
           for (user of users) {
             addToPosts(user.posts, user);
-            posts.push(...user.posts);
+            postsArray.push(...user.posts);
           }
-          resolve();
+          postsArray.sort((a, b) => (a.date > b.date ? -1 : 1));
+          postsArray.splice(maxAmountOfPosts);
+
+          addCommentDetails(postsArray).then(() => {
+            resolve();
+          });
         }
       );
     });
+  }
+
+  let myBestiesPosts = myPosts.then(({ besties }) => {
+    return getPostsFrom(besties, 4, bestiePosts);
   });
 
-  myFriendsPosts.then(() => {
-    posts.sort((a, b) => (a.date > b.date ? -1 : 1));
-    postsShow = posts.slice(0, maxAmountOfPosts);
-    addCommentDetails(postsShow).then((posts) => {
-      res.statusJson(200, { posts: posts });
-    });
+  let myFriendsPosts = myPosts.then(({ friends }) => {
+    return getPostsFrom(friends, 48, posts);
+  });
+
+  Promise.all([myBestiesPosts, myFriendsPosts]).then(() => {
+    res.statusJson(200, { posts, bestiePosts });
   });
 };
 
