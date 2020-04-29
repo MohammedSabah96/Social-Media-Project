@@ -9,8 +9,7 @@ import { AuthService } from './../auth.service';
 export class SidebarComponent implements OnInit, OnDestroy {
   constructor(public auth: AuthService, private alert: AlertsService) {}
 
-  public userData: any = {};
-
+  public userId = '';
   public besties = [];
   public enemies = [];
 
@@ -18,7 +17,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.userDataEvent = this.alert.getUserData.subscribe((user: any) => {
-      this.userData = user;
+      this.userId = user._id;
       this.besties = user.besties;
       this.enemies = user.enemies;
     });

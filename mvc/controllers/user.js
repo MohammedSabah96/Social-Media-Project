@@ -166,7 +166,10 @@ const generateFeed = ({ payload }, res) => {
   let myPosts = new Promise((resolve, reject) => {
     User.findById(payload._id, "", { lean: true }, (err, user) => {
       if (err) {
-        return res.json({ err: err });
+        return res.statusJson(400, { err: err });
+      }
+      if (!user) {
+        return res.statusJson(404, { message: "User does not exits." });
       }
       addToPosts(user.posts, user);
       posts.push(...user.posts);
@@ -275,7 +278,10 @@ const getUserData = ({ params }, res) => {
     { lean: true },
     (err, user) => {
       if (err) {
-        return res.json({ error: err });
+        return res.statusJson(400, { err: err });
+      }
+      if (!user) {
+        return res.statusJson(404, { message: "User does not exits." });
       }
 
       function getRandomFriends(friendsList) {
@@ -506,7 +512,7 @@ const likeUnlike = ({ params, payload }, res) => {
       } else {
         post.likes.push(payload._id);
 
-        if (params.ownerid != params._id) {
+        if (params.ownerid != payload._id) {
           User.findById(payload._id, (err, user) => {
             if (err) {
               reject(err);

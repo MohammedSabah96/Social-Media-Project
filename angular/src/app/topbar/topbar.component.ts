@@ -82,7 +82,13 @@ export class TopbarComponent implements OnInit, OnDestroy {
       method: 'GET',
     };
     this.api.makeRequest(requestObject).then((val: any) => {
-      this.alert.getUserData.emit(val.user);
+      if (val.status === 404) {
+        return this.auth.logout();
+      }
+
+      if (val.statusCode === 200) {
+        this.alert.getUserData.emit(val.user);
+      }
     });
   }
 
