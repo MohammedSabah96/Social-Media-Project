@@ -2,6 +2,7 @@ import { LocalStorageService } from './local-storage.service';
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AlertsService } from './alerts.service';
+import { environment } from '../environments/environment';
 @Injectable({
   providedIn: 'root',
 })
@@ -12,7 +13,8 @@ export class ApiService {
     private alert: AlertsService
   ) {}
 
-  private baseUrl = 'http://localhost:3000';
+  private baseUrl = environment.baseUrl;
+
   private successHandler(value: any) {
     return value;
   }
